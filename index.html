@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+  <meta name="theme-color" content="#f7f3ec"/>
+  <title>حساب الصافي والأنصبة</title>
+  <link rel="manifest" href="manifest.json"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+
+  <!-- ======================================================
+       🔥 FIREBASE CONFIGURATION
+       ➡️ استبدل القيم التالية ببياناتك من Firebase Console
+       ====================================================== -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, set, push, onValue, remove, get }
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    // 🔧 ضع هنا بيانات مشروعك من Firebase Console
+    const firebaseConfig = {
+      apiKey: "AIzaSyCU-1KrVCjOww0is12TYyF_j48GljSptZw",
+      authDomain: "hesab-safi-new.firebaseapp.com",
+      databaseURL: "https://hesab-safi-new-default-rtdb.firebaseio.com",
+      projectId: "hesab-safi-new",
+      storageBucket: "hesab-safi-new.firebasestorage.app",
+      messagingSenderId: "994225844976",
+      appId: "1:994225844976:web:05ff315c079718b4c80835"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    console.log("Firebase connected successfully");
+    const db  = getDatabase(app);
+
+    // Expose to global scope for use in regular JS
+    window._fb = { db, ref, set, push, onValue, remove, get };
+    window._fbReady = true;
+    document.dispatchEvent(new Event('fbReady'));
+  </script>
+
+  <style>
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --bg:#f7f3ec; --bg2:#eee8da; --surface:#ffffff; --surface2:#fdf9f3;
+      --border:#ddd5c2; --border2:#c9bfa8;
+      --text:#3a2e1e; --text2:#6b5a3e; --muted:#9e8c72;
+      --gold:#b8860b; --gold2:#d4a017; --gold3:#f0c040; --gold-bg:#fef9e7;
+      --teal:#1a7a8a; --teal2:#2596a8; --teal-bg:#e8f7f9;
+      --green:#2e7d32; --green2:#388e3c; --green-bg:#e8f5e9;
+      --red:#c62828; --red2:#e53935; --red-bg:#ffebee;
+      --blue:#1565c0; --blue2:#1976d2; --blue-bg:#e3f2fd;
+      --purple:#6a1b9a; --purple2:#7b1fa2; --purple-bg:#f3e5f5;
+      --shadow:0 2px 12px rgba(100,80,40,0.10);
+      --shadow2:0 4px 20px rgba(100,80,40,0.15);
+      --r24:24px;--r16:16px;--r12:12px;--r8:8px;
+    }
+    html{scroll-behavior:smooth}
+    body{
+      font-family:'Cairo','Segoe UI',sans-serif;
+      background:var(--bg);
+      background-image:
+        radial-gradient(ellipse at 15% 10%,rgba(184,134,11,0.08) 0%,transparent 50%),
+        radial-gradient(ellipse at 85% 90%,rgba(26,122,138,0.07) 0%,transparent 50%);
+      min-height:100vh; color:var(--text); padding-bottom:40px;
+    }
+
+    /* =========================================================
+       LOGIN SCREEN
+    ========================================================= */
+    #loginScreen{
+      position:fixed;inset:0;z-index:9999;
+      display:flex;align-items:center;justify-content:center;
+      background:linear-gradient(145deg,#f0e6ff,#e8f4ff,#fff8e6);
+      padding:20px;
+    }
+    .login-card{
+      width:100%;max-width:400px;
+      background:var(--surface);
+      border-radius:var(--r24);padding:36px 28px;
+      border:1.5px solid var(--border);
+      box-shadow:0 12px 40px rgba(100,80,40,0.18);
+      text-align:center;
+    }
+    .login-icon{font-size:52px;display:block;margin-bottom:12px;
+      filter:drop-shadow(0 3px 10px rgba(184,134,11,0.3));}
+    .login-title{font-size:22px;font-weight:900;color:var(--gold);margin-bottom:4px}
+    .login-sub{font-size:12px;color:var(--muted);margin-bottom:28px}
+
+    .login-field{margin-bottom:14px;text-align:right}
+    .login-field label{
+      display:block;font-size:12px;font-weight:700;color:var(--text2);
+      margin-bottom:6px;
+    }
+    .login-input-wrap{position:relative}
+    .login-input{
+      width:100%;padding:13px 16px 13px 44px;
+      background:var(--bg);border:1.5px solid var(--border2);
+      border-radius:var(--r12);color:var(--text);
+      font-family:'Cairo',sans-serif;font-size:15px;font-weight:600;
+      outline:none;transition:all 0.3s;direction:ltr;text-align:right;
+    }
+    .login-input:focus{border-color:var(--gold2);background:var(--gold-bg);
+      box-shadow:0 0 0 3px rgba(184,134,11,0.15)}
+    .login-input::placeholder{color:var(--muted);font-size:13px;font-weight:400;text-align:right}
+    .login-eye{
+      position:absolute;left:12px;top:50%;transform:translateY(-50%);
+      font-size:18px;cursor:pointer;color:var(--muted);user-select:none;
+    }
+    .login-eye:hover{color:var(--gold)}
+
+    .remember-row{
+      display:flex;align-items:center;gap:8px;
+      margin-bottom:20px;cursor:pointer;
+    }
+    .remember-check{
+      width:18px;height:18px;accent-color:var(--purple2);cursor:pointer;
+    }
+    .remember-label{font-size:13px;font-weight:600;color:var(--text2);cursor:pointer}
+
+    .btn-login{
+      width:100%;padding:14px;
+      background:linear-gradient(135deg,#d4a017,#b8860b,#9a7209);
+      border:none;border-radius:var(--r16);
+      color:#fff;font-family:'Cairo',sans-serif;
+      font-size:16px;font-weight:900;cursor:pointer;transition:all 0.3s;
+      box-shadow:0 6px 20px rgba(184,134,11,0.35);
+      display:flex;align-items:center;justify-content:center;gap:8px;
+      margin-bottom:14px;
+    }
+    .btn-login:active{transform:scale(0.97)}
+
+    .login-error{
+      background:var(--red-bg);border:1px solid #ef9a9a;
+      border-radius:var(--r12);padding:10px 14px;
+      color:var(--red);font-size:12px;font-weight:700;
+      margin-bottom:12px;display:none;animation:shake 0.4s ease;
+    }
+    .login-error.show{display:block}
+    @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+    .login-footer{
+      font-size:11px;color:var(--muted);margin-top:16px;
+      border-top:1px solid var(--border);padding-top:12px;
+    }
+
+    /* =========================================================
+       MAIN APP (hidden until login)
+    ========================================================= */
+    #mainApp{display:none}
+    #mainApp.visible{display:block}
+
+    /* ===== HEADER ===== */
+    .header{
+      position:sticky;top:0;z-index:200;
+      background:rgba(247,243,236,0.96);backdrop-filter:blur(16px);
+      border-bottom:2px solid var(--border);padding:12px 20px 10px;
+      text-align:center;box-shadow:0 2px 16px rgba(100,80,40,0.12);
+    }
+    .header-glow{
+      position:absolute;bottom:0;left:50%;transform:translateX(-50%);
+      width:200px;height:2px;
+      background:linear-gradient(90deg,transparent,var(--gold2),transparent);
+    }
+    .header .icon{font-size:30px;display:block;
+      filter:drop-shadow(0 2px 6px rgba(184,134,11,0.3));
+      animation:float 3s ease-in-out infinite;}
+    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+    .header h1{font-size:18px;font-weight:900;color:var(--gold);margin-top:2px}
+    .header p{font-size:11px;color:var(--muted);margin-top:1px}
+
+    .header-right{
+      position:absolute;top:50%;right:16px;transform:translateY(-50%);
+      display:flex;align-items:center;gap:8px;
+    }
+    .btn-logout{
+      padding:5px 12px;background:var(--red-bg);
+      border:1px solid #ef9a9a;border-radius:20px;
+      color:var(--red);font-family:'Cairo',sans-serif;
+      font-size:11px;font-weight:700;cursor:pointer;transition:all 0.2s;
+    }
+    .btn-logout:hover{background:#ffcdd2}
+    .sync-indicator{font-size:11px;color:var(--muted);font-weight:600}
+
+    /* ===== TABS ===== */
+    .tabs-wrapper{
+      position:sticky;top:82px;z-index:150;
+      background:rgba(247,243,236,0.95);backdrop-filter:blur(10px);
+      padding:8px 16px;border-bottom:1px solid var(--border);
+      box-shadow:0 1px 8px rgba(100,80,40,0.08);
+    }
+    .tabs{display:flex;gap:8px;max-width:480px;margin:0 auto}
+    .tab-btn{
+      flex:1;padding:9px 8px;border:none;border-radius:var(--r12);
+      font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;
+      cursor:pointer;transition:all 0.3s;
+      background:var(--bg2);color:var(--muted);border:1.5px solid var(--border);
+      display:flex;align-items:center;justify-content:center;gap:5px;
+    }
+    .tab-btn.active{
+      background:linear-gradient(135deg,var(--purple),var(--purple2));
+      color:#fff;border-color:var(--purple);
+      box-shadow:0 4px 14px rgba(106,27,154,0.3);
+    }
+    .tab-btn .badge{
+      background:var(--gold2);color:#fff;border-radius:20px;
+      padding:1px 7px;font-size:10px;font-weight:900;min-width:20px;text-align:center;
+    }
+
+    /* ===== CONTAINER ===== */
+    .container{max-width:480px;margin:0 auto;padding:14px;position:relative;z-index:10}
+    .page{display:none}
+    .page.active{display:block;animation:pageIn 0.35s ease}
+    @keyframes pageIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+    /* ===== CARDS ===== */
+    .card{background:var(--surface);border-radius:var(--r24);padding:18px;
+      margin-bottom:14px;border:1px solid var(--border);box-shadow:var(--shadow);}
+
+    /* Summary Top */
+    .summary-top-card{
+      background:linear-gradient(145deg,#f0e6ff,#e8f4ff,#fff8e6);
+      border:1.5px solid #c9b8e8;box-shadow:0 4px 24px rgba(106,27,154,0.12);
+      text-align:center;padding:20px 18px;
+    }
+    .summary-top-btn{
+      display:inline-block;padding:5px 18px;
+      background:rgba(106,27,154,0.1);border:1px solid rgba(106,27,154,0.25);
+      border-radius:30px;font-size:12px;font-weight:700;color:var(--purple);margin-bottom:12px;
+    }
+    .net-big{font-size:44px;font-weight:900;direction:ltr;color:var(--text);letter-spacing:-1px;line-height:1.1}
+    .net-big.positive{color:var(--green)}
+    .net-big.negative{color:var(--red)}
+    .net-currency-label{font-size:17px;font-weight:700;color:var(--text2)}
+    .shares-row{
+      display:grid;grid-template-columns:1fr 1px 1fr;
+      margin-top:14px;padding-top:14px;border-top:1.5px solid var(--border);
+    }
+    .shares-divider{background:var(--border)}
+    .share-item{text-align:center;padding:0 10px}
+    .share-item-label{font-size:11px;color:var(--muted);font-weight:700;margin-bottom:4px}
+    .share-item-fraction{
+      font-size:10px;color:var(--muted);background:var(--bg2);padding:2px 8px;
+      border-radius:20px;display:inline-block;margin-bottom:6px;border:1px solid var(--border);
+    }
+    .share-item-amount{font-size:18px;font-weight:900;direction:ltr}
+    .share-item-amount.blue-text{color:var(--blue2)}
+    .share-item-amount.purple-text{color:var(--purple2)}
+
+    /* Input Card */
+    .input-card{background:var(--surface2);border:1.5px solid var(--border)}
+    .mode-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+    .mode-btn{
+      padding:11px 8px;border:none;border-radius:var(--r12);
+      font-family:'Cairo',sans-serif;font-size:13px;font-weight:800;
+      cursor:pointer;transition:all 0.3s;background:var(--bg2);color:var(--muted);
+      border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;gap:6px;
+    }
+    .mode-btn.income-active{
+      background:linear-gradient(135deg,#00695c,#00897b,#26a69a);color:#fff;border-color:#00897b;
+      box-shadow:0 4px 16px rgba(0,137,123,0.35);
+    }
+    .mode-btn.expense-active{
+      background:linear-gradient(135deg,#b71c1c,#c62828,#e53935);color:#fff;border-color:#c62828;
+      box-shadow:0 4px 16px rgba(198,40,40,0.35);
+    }
+    .cat-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:14px}
+    .cat-btn{
+      padding:10px 4px;border:none;border-radius:var(--r12);
+      font-family:'Cairo',sans-serif;font-size:10px;font-weight:700;
+      cursor:pointer;transition:all 0.3s;background:var(--bg);color:var(--text2);
+      border:1.5px solid var(--border);display:flex;flex-direction:column;align-items:center;gap:4px;
+    }
+    .cat-btn .cat-icon{font-size:20px;display:block}
+    .cat-btn.cat-active{
+      background:linear-gradient(135deg,var(--purple-bg),#e8d5ff);
+      color:var(--purple);border-color:var(--purple2);
+      box-shadow:0 3px 12px rgba(106,27,154,0.2);transform:scale(1.04);
+    }
+    .other-detail-wrapper{display:none;margin-bottom:14px;animation:fadeSlide 0.3s ease}
+    .other-detail-wrapper.show{display:block}
+    @keyframes fadeSlide{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+    .other-detail-input{
+      width:100%;padding:12px 16px;
+      background:var(--gold-bg);border:1.5px solid var(--gold2);border-radius:var(--r12);
+      color:var(--text);font-family:'Cairo',sans-serif;font-size:14px;font-weight:600;
+      outline:none;transition:all 0.3s;direction:rtl;
+    }
+    .other-detail-input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(184,134,11,0.15)}
+    .other-detail-input::placeholder{color:var(--muted);font-size:13px;font-weight:400}
+    .amount-display-box{
+      background:var(--bg);border:1.5px solid var(--border2);
+      border-radius:var(--r16);padding:14px 18px;margin-bottom:14px;
+    }
+    .amount-display-box.income-mode{border-color:#80cbc4;background:#f0faf9}
+    .amount-display-box.expense-mode{border-color:#ef9a9a;background:#fff5f5}
+    .amount-input{
+      width:100%;background:transparent;border:none;outline:none;
+      color:var(--text);font-family:'Cairo',sans-serif;
+      font-size:32px;font-weight:900;text-align:center;direction:ltr;
+      -webkit-appearance:none;-moz-appearance:textfield;
+    }
+    .amount-input::placeholder{color:var(--muted);font-size:26px;font-weight:400}
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+    .amount-unit{text-align:center;font-size:12px;color:var(--muted);font-weight:600;margin-top:2px}
+    .btn-calc{
+      width:100%;padding:15px;
+      background:linear-gradient(135deg,#d4a017,#b8860b,#9a7209);
+      border:none;border-radius:var(--r24);color:#fff;font-family:'Cairo',sans-serif;
+      font-size:17px;font-weight:900;cursor:pointer;transition:all 0.3s;
+      box-shadow:0 6px 20px rgba(184,134,11,0.35);
+      display:flex;align-items:center;justify-content:center;gap:8px;
+      margin-bottom:14px;position:relative;overflow:hidden;
+    }
+    .btn-calc::before{content:'';position:absolute;inset:0;
+      background:linear-gradient(135deg,rgba(255,255,255,0.2) 0%,transparent 50%);}
+    .btn-calc:active{transform:scale(0.97)}
+    .month-totals{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+    .total-box{border-radius:var(--r12);padding:12px 10px;text-align:center;border:1.5px solid}
+    .total-box.income-box{background:var(--green-bg);border-color:#a5d6a7}
+    .total-box.expense-box{background:var(--red-bg);border-color:#ef9a9a}
+    .total-box-label{font-size:11px;color:var(--muted);font-weight:700;margin-bottom:5px}
+    .total-box-value{font-size:18px;font-weight:900;direction:ltr}
+    .total-box.income-box .total-box-value{color:var(--green2)}
+    .total-box.expense-box .total-box-value{color:var(--red2)}
+    .action-btns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
+    .action-btn{
+      padding:11px 5px;border:none;border-radius:var(--r12);
+      font-family:'Cairo',sans-serif;font-size:10px;font-weight:800;
+      cursor:pointer;transition:all 0.3s;display:flex;flex-direction:column;align-items:center;gap:4px;
+    }
+    .action-btn .btn-icon{font-size:18px;display:block}
+    .btn-print{background:var(--red-bg);border:1.5px solid #ef9a9a;color:var(--red)}
+    .btn-clear-val{background:var(--gold-bg);border:1.5px solid #f0c040;color:var(--gold)}
+    .btn-reset-all{background:var(--bg2);border:1.5px solid var(--border2);color:var(--muted)}
+    .action-btn:active{transform:scale(0.97)}
+    .error-msg{
+      display:none;background:var(--red-bg);border:1px solid #ef9a9a;
+      border-radius:var(--r12);padding:10px 14px;text-align:center;
+      color:var(--red);font-size:12px;font-weight:700;margin-bottom:10px;animation:shake 0.4s ease;
+    }
+    .error-msg.visible{display:block}
+    .toast{
+      position:fixed;top:20px;left:50%;
+      transform:translateX(-50%) translateY(-100px);
+      background:linear-gradient(135deg,var(--green),var(--green2));
+      color:#fff;padding:10px 22px;border-radius:50px;
+      font-size:13px;font-weight:800;z-index:99999;
+      transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+      box-shadow:var(--shadow2);white-space:nowrap;
+    }
+    .toast.show{transform:translateX(-50%) translateY(0)}
+    .history-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+    .history-title{font-size:15px;font-weight:800;color:var(--gold);display:flex;align-items:center;gap:6px}
+    .btn-del-all{
+      padding:6px 13px;background:var(--red-bg);border:1px solid #ef9a9a;border-radius:30px;
+      color:var(--red);font-family:'Cairo',sans-serif;font-size:11px;font-weight:700;cursor:pointer;
+    }
+    .month-summary-card{
+      background:linear-gradient(135deg,var(--purple-bg),var(--blue-bg));
+      border:1.5px solid #c5b8e8;border-radius:var(--r16);padding:14px;margin-bottom:14px;
+    }
+    .month-summary-title{font-size:12px;font-weight:800;color:var(--gold);margin-bottom:10px;display:flex;align-items:center;gap:5px}
+    .month-summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+    .msm-item{text-align:center;background:rgba(255,255,255,0.7);border-radius:10px;padding:8px 4px;border:1px solid var(--border)}
+    .msm-label{font-size:9px;color:var(--muted);font-weight:700;margin-bottom:4px}
+    .msm-value{font-size:14px;font-weight:900;direction:ltr}
+    .msm-value.green{color:var(--green2)}.msm-value.red{color:var(--red2)}.msm-value.gold{color:var(--gold)}
+    .record-item{
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:var(--r16);padding:13px;margin-bottom:10px;
+      position:relative;overflow:hidden;transition:all 0.3s;box-shadow:var(--shadow);
+    }
+    .record-item::before{content:'';position:absolute;right:0;top:0;bottom:0;width:3px;}
+    .record-item.income-rec::before{background:linear-gradient(180deg,var(--green2),var(--teal2))}
+    .record-item.expense-rec::before{background:linear-gradient(180deg,var(--red2),var(--red))}
+    .rec-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+    .rec-left{display:flex;flex-direction:column;gap:2px}
+    .rec-date{font-size:10px;color:var(--muted);font-weight:600}
+    .rec-cat{font-size:12px;font-weight:800}
+    .income-rec .rec-cat{color:var(--green2)}.expense-rec .rec-cat{color:var(--red2)}
+    .rec-right{display:flex;align-items:center;gap:8px}
+    .rec-amount{font-size:17px;font-weight:900;direction:ltr}
+    .income-rec .rec-amount{color:var(--green2)}.expense-rec .rec-amount{color:var(--red2)}
+    .rec-type-badge{font-size:9px;font-weight:800;padding:3px 8px;border-radius:20px}
+    .income-badge{background:var(--green-bg);color:var(--green2);border:1px solid #a5d6a7}
+    .expense-badge{background:var(--red-bg);color:var(--red2);border:1px solid #ef9a9a}
+    .rec-del{width:28px;height:28px;background:var(--red-bg);border:1px solid #ef9a9a;border-radius:50%;
+      display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;flex-shrink:0}
+    .rec-pdf-btn{width:100%;padding:8px;background:var(--red-bg);border:1px solid #ef9a9a;border-radius:10px;
+      color:var(--red);font-family:'Cairo',sans-serif;font-size:11px;font-weight:700;cursor:pointer;margin-top:8px;
+      display:flex;align-items:center;justify-content:center;gap:5px;}
+    .empty-state{text-align:center;padding:50px 20px;color:var(--muted)}
+    .empty-state .empty-icon{font-size:56px;margin-bottom:12px;display:block}
+    .empty-state p{font-size:14px;font-weight:600;margin-bottom:4px;color:var(--text2)}
+    .empty-state small{font-size:12px;opacity:0.7}
+    .footer{text-align:center;padding:18px 20px 10px;font-size:11px;color:var(--muted)}
+    .sync-banner{
+      text-align:center;padding:6px;font-size:11px;font-weight:700;
+      background:var(--green-bg);color:var(--green2);border-bottom:1px solid #a5d6a7;
+      display:none;
+    }
+    .sync-banner.show{display:block}
+    .install-banner{
+      background:linear-gradient(90deg,var(--purple),var(--purple2));
+      padding:9px 16px;text-align:center;font-size:12px;
+      font-weight:700;color:#fff;display:none;cursor:pointer;
+      position:sticky;top:130px;z-index:99;
+    }
+    .install-banner.show{display:block}
+  </style>
+</head>
+<body>
+
+<div class="toast" id="toast">✅ تم الحفظ!</div>
+<div class="sync-banner" id="syncBanner">☁️ تم المزامنة مع قاعدة البيانات</div>
+
+<!-- ============================================================
+     LOGIN SCREEN
+============================================================ -->
+<div id="loginScreen">
+  <div class="login-card">
+    <span class="login-icon">🚛</span>
+    <div class="login-title">حساب الصافي والأنصبة</div>
+    <div class="login-sub">أدخل بياناتك للدخول إلى التطبيق</div>
+
+    <div class="login-field">
+      <label>👤 اسم المستخدم</label>
+      <div class="login-input-wrap">
+        <input type="text" class="login-input" id="loginUser"
+               placeholder="أدخل اسم المستخدم" autocomplete="username"/>
+      </div>
+    </div>
+
+    <div class="login-field">
+      <label>🔑 كلمة المرور</label>
+      <div class="login-input-wrap">
+        <input type="password" class="login-input" id="loginPass"
+               placeholder="أدخل كلمة المرور" autocomplete="current-password"/>
+        <span class="login-eye" id="togglePass" onclick="togglePassword()">👁️</span>
+      </div>
+    </div>
+
+    <label class="remember-row">
+      <input type="checkbox" class="remember-check" id="rememberMe"/>
+      <span class="remember-label">💾 تذكر بياناتي في هذا الجهاز</span>
+    </label>
+
+    <div class="login-error" id="loginError">❌ اسم المستخدم أو كلمة المرور غير صحيحة</div>
+
+    <button class="btn-login" onclick="doLogin()">
+      <span>🔓</span> دخول إلى التطبيق
+    </button>
+
+    <div class="login-footer">
+      🔒 هذا التطبيق محمي بكلمة مرور<br>
+      <small>لا يمكن الوصول إليه بدون بيانات صحيحة</small>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MAIN APP
+============================================================ -->
+<div id="mainApp">
+
+  <div class="header">
+    <span class="icon">🚛</span>
+    <h1>حساب الصافي والأنصبة</h1>
+    <p>نظام تتبع الدخل والمصروفات وتوزيع الأرباح</p>
+    <div class="header-right">
+      <span class="sync-indicator" id="syncStatus">☁️</span>
+      <button class="btn-logout" onclick="doLogout()">🚪 خروج</button>
+    </div>
+    <div class="header-glow"></div>
+  </div>
+
+  <div class="tabs-wrapper">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('calc')" id="tab-calc">🧮 الحاسبة</button>
+      <button class="tab-btn" onclick="switchTab('history')" id="tab-history">
+        📋 السجلات <span class="badge" id="histBadge">0</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="install-banner" id="installBanner" onclick="installApp()">
+    📲 اضغط هنا لتثبيت التطبيق على هاتفك
+  </div>
+
+  <div class="container">
+
+    <!-- PAGE: CALCULATOR -->
+    <div class="page active" id="page-calc">
+
+      <div class="card summary-top-card">
+        <div class="summary-top-btn">📅 صافي أرباح هذا الشهر</div>
+        <div>
+          <span class="net-big" id="topNet">0.00</span>
+          <span class="net-currency-label"> ريال</span>
+        </div>
+        <div class="shares-row">
+          <div class="share-item">
+            <div class="share-item-label">نصيبك</div>
+            <div class="share-item-fraction">(1/3)</div>
+            <div class="share-item-amount blue-text" id="topDriver">0.00</div>
+          </div>
+          <div class="shares-divider"></div>
+          <div class="share-item">
+            <div class="share-item-label">الشركة</div>
+            <div class="share-item-fraction">(2/3)</div>
+            <div class="share-item-amount purple-text" id="topCompany">0.00</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card input-card">
+        <div class="mode-tabs">
+          <button class="mode-btn income-active" id="incomeBtn" onclick="setMode('income')">💵 إيراد / دخل</button>
+          <button class="mode-btn" id="expenseBtn" onclick="setMode('expense')">📤 مصاريف</button>
+        </div>
+        <div id="catSection" style="display:none">
+          <div class="cat-grid">
+            <button class="cat-btn" id="cat-diesel" onclick="selectCat('diesel')"><span class="cat-icon">⛽</span>ديزل</button>
+            <button class="cat-btn" id="cat-oil" onclick="selectCat('oil')"><span class="cat-icon">🛢️</span>زيت</button>
+            <button class="cat-btn" id="cat-maint" onclick="selectCat('maint')"><span class="cat-icon">🔧</span>صيانة</button>
+            <button class="cat-btn" id="cat-living" onclick="selectCat('living')"><span class="cat-icon">🏠</span>المعيشة</button>
+            <button class="cat-btn" id="cat-other" onclick="selectCat('other')"><span class="cat-icon">➕</span>أخرى</button>
+          </div>
+        </div>
+        <div class="other-detail-wrapper" id="otherDetailWrapper">
+          <input type="text" class="other-detail-input" id="otherDetail"
+                 placeholder="اكتب تفاصيل المصروف الآخر..." maxlength="80"/>
+        </div>
+        <div class="amount-display-box income-mode" id="amountBox">
+          <input type="number" class="amount-input" id="amountInput"
+                 placeholder="0.00" min="0" step="0.01" inputmode="decimal"/>
+          <div class="amount-unit">ريال</div>
+        </div>
+        <div class="error-msg" id="errorMsg">⚠️ يرجى إدخال قيمة صحيحة أكبر من صفر</div>
+        <button class="btn-calc" onclick="addEntry()"><span>📊</span> احسب الناتج</button>
+        <div class="month-totals">
+          <div class="total-box income-box">
+            <div class="total-box-label">💰 دخل الشهر</div>
+            <div class="total-box-value" id="monthIncome">0.00</div>
+          </div>
+          <div class="total-box expense-box">
+            <div class="total-box-label">📉 مصاريف الشهر</div>
+            <div class="total-box-value" id="monthExpense">0.00</div>
+          </div>
+        </div>
+        <div class="action-btns">
+          <button class="action-btn btn-print" onclick="printMonthlyReport()">
+            <span class="btn-icon">🖨️</span>طباعة التقرير الشهري
+          </button>
+          <button class="action-btn btn-clear-val" onclick="clearValue()">
+            <span class="btn-icon">🧹</span>مسح القيمة
+          </button>
+          <button class="action-btn btn-reset-all" onclick="resetAllData()">
+            <span class="btn-icon">🔄</span>مسح جميع البيانات
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: HISTORY -->
+    <div class="page" id="page-history">
+      <div class="history-top">
+        <div class="history-title">📋 سجل العمليات</div>
+        <button class="btn-del-all" onclick="clearAllRecords()">🗑️ مسح الكل</button>
+      </div>
+      <div class="month-summary-card" id="histSummary" style="display:none">
+        <div class="month-summary-title">📊 ملخص الشهر الحالي</div>
+        <div class="month-summary-grid">
+          <div class="msm-item"><div class="msm-label">إجمالي الدخل</div><div class="msm-value green" id="hsTotalIncome">0.00</div></div>
+          <div class="msm-item"><div class="msm-label">إجمالي المصاريف</div><div class="msm-value red" id="hsTotalExpense">0.00</div></div>
+          <div class="msm-item"><div class="msm-label">الصافي</div><div class="msm-value gold" id="hsNet">0.00</div></div>
+        </div>
+      </div>
+      <div id="historyList"></div>
+    </div>
+
+    <div class="footer">حساب الصافي والأنصبة &copy; 2026 — جميع الحقوق محفوظة</div>
+  </div>
+</div>
+
+<script>
+/* ================================================================
+   🔐 AUTH CONFIG
+   ➡️ غيّر هذه القيم لتعيين اسم المستخدم وكلمة المرور
+================================================================ */
+const USERS = {
+  'Faah': 'Faah.m20902',
+  // يمكنك إضافة مستخدمين آخرين هنا:
+  // 'driver1': 'pass123',
+};
+
+/* ================================================================
+   LOGIN LOGIC
+================================================================ */
+let loggedIn = false;
+
+function checkSavedLogin(){
+  try{
+    const saved = localStorage.getItem('hesab_auth');
+    if(saved){
+      const {u,p} = JSON.parse(saved);
+      if(USERS[u] && USERS[u]===p){ doLoginSilent(u); return; }
+    }
+  }catch(e){}
+}
+
+function doLoginSilent(u){
+  loggedIn = true;
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('mainApp').classList.add('visible');
+  loadFromFirebase();
+}
+
+function doLogin(){
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value;
+  const errEl = document.getElementById('loginError');
+  if(!u||!p){ errEl.textContent='⚠️ يرجى إدخال اسم المستخدم وكلمة المرور'; errEl.classList.add('show'); return; }
+  if(USERS[u] && USERS[u]===p){
+    errEl.classList.remove('show');
+    if(document.getElementById('rememberMe').checked){
+      localStorage.setItem('hesab_auth', JSON.stringify({u,p}));
+    } else {
+      localStorage.removeItem('hesab_auth');
+    }
+    loggedIn=true;
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('mainApp').classList.add('visible');
+    loadFromFirebase();
+  } else {
+    errEl.textContent='❌ اسم المستخدم أو كلمة المرور غير صحيحة';
+    errEl.classList.add('show');
+    document.getElementById('loginPass').value='';
+  }
+}
+
+function doLogout(){
+  if(!confirm('هل تريد تسجيل الخروج؟'))return;
+  localStorage.removeItem('hesab_auth');
+  loggedIn=false;
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('mainApp').classList.remove('visible');
+  document.getElementById('loginUser').value='';
+  document.getElementById('loginPass').value='';
+  document.getElementById('loginError').classList.remove('show');
+}
+
+function togglePassword(){
+  const inp = document.getElementById('loginPass');
+  const icon = document.getElementById('togglePass');
+  if(inp.type==='password'){ inp.type='text'; icon.textContent='🙈'; }
+  else { inp.type='password'; icon.textContent='👁️'; }
+}
+
+document.addEventListener('keydown',(e)=>{
+  if(e.key==='Enter' && !loggedIn) doLogin();
+  if(e.key==='Enter' && loggedIn) addEntry();
+});
+
+/* ================================================================
+   FIREBASE SYNC
+================================================================ */
+let allRecords = [];
+let fbUnsubscribe = null;
+
+function loadFromFirebase(){
+  const status = document.getElementById('syncStatus');
+  status.textContent = '🔄';
+
+  if(!window._fbReady){
+    document.addEventListener('fbReady',()=>{ loadFromFirebase(); },{once:true});
+    return;
+  }
+
+  try{
+    const { db, ref, onValue } = window._fb;
+    const dbRef = ref(db,'records');
+    fbUnsubscribe = onValue(dbRef,(snapshot)=>{
+      const data = snapshot.val();
+      allRecords = data ? Object.entries(data).map(([k,v])=>({...v,_fbKey:k})) : [];
+      allRecords.sort((a,b)=>b.id-a.id);
+      updateBadge(); updateTopSummary(); updateMonthTotals();
+      renderHistory();
+      status.textContent = '☁️';
+      showSyncBanner();
+    },(err)=>{
+      console.warn('Firebase error, using local:', err);
+      allRecords = getLocalRecords();
+      updateBadge(); updateTopSummary(); updateMonthTotals();
+      status.textContent = '📱';
+    });
+  } catch(e){
+    console.warn('Firebase not configured, using localStorage:', e);
+    allRecords = getLocalRecords();
+    updateBadge(); updateTopSummary(); updateMonthTotals();
+    document.getElementById('syncStatus').textContent = '📱';
+  }
+}
+
+function showSyncBanner(){
+  const b = document.getElementById('syncBanner');
+  b.classList.add('show'); setTimeout(()=>b.classList.remove('show'),2500);
+}
+
+async function saveToFirebase(record){
+  try{
+    const { db, ref, push } = window._fb;
+    await push(ref(db,'records'), record);
+  } catch(e){
+    console.warn('Firebase save failed, using local'); saveLocalRecord(record);
+  }
+}
+
+async function deleteFromFirebase(fbKey, id){
+  try{
+    const { db, ref, remove } = window._fb;
+    await remove(ref(db,'records/'+fbKey));
+  } catch(e){
+    let recs = getLocalRecords().filter(r=>r.id!==id); saveLocalAll(recs);
+    updateBadge(); updateTopSummary(); updateMonthTotals(); renderHistory();
+  }
+}
+
+async function deleteAllFromFirebase(){
+  try{
+    const { db, ref, remove } = window._fb;
+    await remove(ref(db,'records'));
+  } catch(e){
+    saveLocalAll([]); updateBadge(); updateTopSummary(); updateMonthTotals(); renderHistory();
+  }
+}
+
+/* ================================================================
+   LOCAL FALLBACK
+================================================================ */
+function getLocalRecords(){try{return JSON.parse(localStorage.getItem('hesab_v3_records')||'[]')}catch{return[]}}
+function saveLocalRecord(r){const a=getLocalRecords();a.unshift(r);saveLocalAll(a);}
+function saveLocalAll(a){localStorage.setItem('hesab_v3_records',JSON.stringify(a));}
+
+/* ================================================================
+   APP LOGIC
+================================================================ */
+let currentMode='income', currentCat=null;
+const CAT_LABELS={diesel:'⛽ ديزل',oil:'🛢️ زيت',maint:'🔧 صيانة',living:'🏠 معيشة',other:'➕ أخرى'};
+const CAT_AR={diesel:'ديزل',oil:'زيت',maint:'صيانة',living:'المعيشة',other:'أخرى'};
+function fmt(n){return n.toLocaleString('ar-SA',{minimumFractionDigits:2,maximumFractionDigits:2})}
+
+function setMode(mode){
+  currentMode=mode;currentCat=null;
+  const ib=document.getElementById('incomeBtn'),eb=document.getElementById('expenseBtn');
+  const cs=document.getElementById('catSection'),ab=document.getElementById('amountBox');
+  const odw=document.getElementById('otherDetailWrapper');
+  if(mode==='income'){ib.className='mode-btn income-active';eb.className='mode-btn';cs.style.display='none';odw.classList.remove('show');ab.className='amount-display-box income-mode';}
+  else{ib.className='mode-btn';eb.className='mode-btn expense-active';cs.style.display='block';ab.className='amount-display-box expense-mode';}
+  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('cat-active'));
+  document.getElementById('amountInput').value='';
+  document.getElementById('errorMsg').classList.remove('visible');
+}
+function selectCat(cat){
+  currentCat=cat;
+  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('cat-active'));
+  document.getElementById('cat-'+cat).classList.add('cat-active');
+  const odw=document.getElementById('otherDetailWrapper');
+  if(cat==='other')odw.classList.add('show');
+  else{odw.classList.remove('show');document.getElementById('otherDetail').value='';}
+}
+async function addEntry(){
+  const amount=parseFloat(document.getElementById('amountInput').value);
+  const errEl=document.getElementById('errorMsg');
+  if(isNaN(amount)||amount<=0){errEl.classList.add('visible');return}
+  errEl.classList.remove('visible');
+  if(currentMode==='expense'&&!currentCat){
+    errEl.textContent='⚠️ يرجى اختيار نوع المصروف أولاً';errEl.classList.add('visible');return;
+  }
+  errEl.textContent='⚠️ يرجى إدخال قيمة صحيحة أكبر من صفر';
+  const now=new Date();
+  const record={
+    id:Date.now(),type:currentMode,
+    cat:currentMode==='expense'?currentCat:'income',
+    catLabel:currentMode==='expense'?CAT_LABELS[currentCat]:'💵 دخل',
+    catAr:currentMode==='expense'?CAT_AR[currentCat]:'إيراد عام',
+    detail:currentCat==='other'?document.getElementById('otherDetail').value.trim():'',
+    amount:amount,
+    date:now.toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'}),
+    time:now.toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit',second:'2-digit'}),
+    month:now.getFullYear()+'-'+(now.getMonth()+1)
+  };
+  await saveToFirebase(record);
+  clearValue();
+  showToast(currentMode==='income'?'✅ تم تسجيل الدخل!':'✅ تم تسجيل المصروف!');
+}
+function clearValue(){
+  document.getElementById('amountInput').value='';
+  document.getElementById('otherDetail').value='';
+  document.getElementById('errorMsg').classList.remove('visible');
+}
+async function resetAllData(){
+  if(!confirm('هل أنت متأكد من مسح جميع البيانات والبدء من جديد؟'))return;
+  await deleteAllFromFirebase();
+  allRecords=[];clearValue();updateTopSummary();updateMonthTotals();
+  showToast('🔄 تم مسح جميع البيانات','linear-gradient(135deg,#757575,#424242)');
+}
+function updateBadge(){document.getElementById('histBadge').textContent=allRecords.length}
+function getMonthRecords(){
+  const now=new Date(),cm=now.getFullYear()+'-'+(now.getMonth()+1);
+  return allRecords.filter(r=>r.month===cm);
+}
+function updateTopSummary(){
+  const recs=getMonthRecords();let tI=0,tE=0;
+  recs.forEach(r=>{if(r.type==='income')tI+=r.amount;else tE+=r.amount;});
+  const net=tI-tE,d=net>0?net/3:0,c=net>0?(net*2)/3:0;
+  const el=document.getElementById('topNet');
+  el.textContent=fmt(Math.abs(net));
+  el.className='net-big'+(net<0?' negative':net>0?' positive':'');
+  document.getElementById('topDriver').textContent=fmt(d);
+  document.getElementById('topCompany').textContent=fmt(c);
+}
+function updateMonthTotals(){
+  const recs=getMonthRecords();let tI=0,tE=0;
+  recs.forEach(r=>{if(r.type==='income')tI+=r.amount;else tE+=r.amount;});
+  document.getElementById('monthIncome').textContent=fmt(tI);
+  document.getElementById('monthExpense').textContent=fmt(tE);
+}
+function switchTab(tab){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+tab).classList.add('active');
+  document.getElementById('tab-'+tab).classList.add('active');
+  if(tab==='history')renderHistory();
+}
+function renderHistory(){
+  const list=document.getElementById('historyList'),sc=document.getElementById('histSummary');
+  if(allRecords.length===0){
+    sc.style.display='none';
+    list.innerHTML=`<div class="empty-state"><span class="empty-icon">📂</span><p>لا توجد سجلات</p><small>قم بتسجيل دخل أو مصروف أولاً</small></div>`;
+    return;
+  }
+  const recs=getMonthRecords();let tI=0,tE=0;
+  recs.forEach(r=>{if(r.type==='income')tI+=r.amount;else tE+=r.amount;});
+  const tN=tI-tE;
+  document.getElementById('hsTotalIncome').textContent=fmt(tI);
+  document.getElementById('hsTotalExpense').textContent=fmt(tE);
+  document.getElementById('hsNet').textContent=fmt(tN);
+  document.getElementById('hsNet').className='msm-value '+(tN>=0?'gold':'red');
+  sc.style.display='block';
+  list.innerHTML=allRecords.map(r=>`
+    <div class="record-item ${r.type==='income'?'income-rec':'expense-rec'}" id="rec-${r.id}">
+      <div class="rec-header">
+        <div class="rec-left">
+          <div class="rec-date">🕐 ${r.date} — ${r.time}</div>
+          <div class="rec-cat">${r.catLabel}${r.detail?' — '+r.detail:''}</div>
+        </div>
+        <div class="rec-right">
+          <div>
+            <div class="rec-amount">${fmt(r.amount)}</div>
+            <span class="rec-type-badge ${r.type==='income'?'income-badge':'expense-badge'}">${r.type==='income'?'دخل':'مصروف'}</span>
+          </div>
+          <div class="rec-del" onclick="deleteRecord(${r.id},'${r._fbKey||''}')">🗑️</div>
+        </div>
+      </div>
+      <button class="rec-pdf-btn" onclick="exportRecordPDF(${r.id})">📄 تصدير PDF</button>
+    </div>`).join('');
+}
+async function deleteRecord(id,fbKey){
+  await deleteFromFirebase(fbKey,id);
+  showToast('🗑️ تم الحذف','linear-gradient(135deg,#e53935,#b71c1c)');
+}
+async function clearAllRecords(){
+  if(!allRecords.length)return;
+  if(!confirm('هل أنت متأكد من مسح جميع السجلات؟'))return;
+  await deleteAllFromFirebase();
+  allRecords=[];updateTopSummary();updateMonthTotals();renderHistory();
+  showToast('🗑️ تم مسح الكل','linear-gradient(135deg,#e53935,#b71c1c)');
+}
+function showToast(msg,bg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.style.background=bg||'linear-gradient(135deg,#2e7d32,#388e3c)';
+  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+/* ================================================================
+   PDF
+================================================================ */
+function printMonthlyReport(){
+  try{
+    const {jsPDF}=window.jspdf;
+    const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    const W=210,M=15;
+    const now=new Date();
+    const recs=getMonthRecords();
+    let tI=0,tE=0;
+    recs.forEach(r=>{if(r.type==='income')tI+=r.amount;else tE+=r.amount;});
+    const tN=tI-tE,d=tN>0?tN/3:0,c=tN>0?(tN*2)/3:0;
+    doc.setFillColor(255,252,242);doc.rect(0,0,W,297,'F');
+    doc.setFillColor(184,134,11);doc.rect(0,0,W,4,'F');
+    doc.setFillColor(240,192,64);doc.rect(0,4,W,1,'F');
+    doc.setTextColor(100,70,10);doc.setFontSize(20);doc.setFont('helvetica','bold');
+    doc.text('Al-Taqrir Al-Shahri',W/2,20,{align:'center'});
+    doc.setFontSize(11);doc.setFont('helvetica','normal');doc.setTextColor(140,100,20);
+    doc.text(now.toLocaleDateString('ar-SA',{year:'numeric',month:'long'}),W/2,28,{align:'center'});
+    doc.setDrawColor(200,175,100);doc.setLineWidth(0.4);doc.line(M,32,W-M,32);
+    let y=38;
+    doc.setFontSize(12);doc.setFont('helvetica','bold');doc.setTextColor(100,70,10);
+    doc.text('Ijmali Al-Amaliyat: '+recs.length,W-M,y,{align:'right'});y+=8;
+    doc.setFont('helvetica','normal');doc.setFontSize(11);doc.setTextColor(46,125,50);
+    doc.text('Ijmali Al-Mablagh: ',W-M,y,{align:'right'});doc.setFont('helvetica','bold');doc.text(fmt(tI)+'  r.s',W-M-55,y);y+=8;
+    doc.setTextColor(21,101,192);doc.setFont('helvetica','normal');
+    doc.text('Nasibak: ',W-M,y,{align:'right'});doc.setFont('helvetica','bold');doc.text(fmt(d)+'  r.s',W-M-55,y);y+=8;
+    doc.setTextColor(106,27,154);doc.setFont('helvetica','normal');
+    doc.text('Nasib Al-Sharika: ',W-M,y,{align:'right'});doc.setFont('helvetica','bold');doc.text(fmt(c)+'  r.s',W-M-55,y);y+=10;
+    doc.setDrawColor(200,175,100);doc.setLineWidth(0.4);doc.line(M,y,W-M,y);y+=6;
+    doc.setFillColor(245,235,195);doc.setDrawColor(200,175,100);doc.rect(M,y,W-2*M,10,'FD');
+    doc.setTextColor(100,70,10);doc.setFontSize(11);doc.setFont('helvetica','bold');
+    doc.text('Al-Tarikh',W-M-5,y+7,{align:'right'});doc.text('Al-Tafsil',W/2,y+7,{align:'center'});doc.text('Al-Mablagh',M+15,y+7,{align:'center'});y+=10;
+    recs.forEach((r,i)=>{
+      if(y>270){doc.addPage();doc.setFillColor(255,252,242);doc.rect(0,0,W,297,'F');y=20;}
+      const bg=i%2===0?[255,252,242]:[252,247,230];
+      doc.setFillColor(...bg);doc.setDrawColor(220,200,150);doc.rect(M,y,W-2*M,9,'FD');
+      doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(80,60,20);
+      doc.text(r.date+' '+r.time,W-M-3,y+6.5,{align:'right'});
+      const det=r.detail?r.catAr+' - '+r.detail:r.catAr;
+      doc.text(det,W/2,y+6.5,{align:'center'});
+      const col=r.type==='income'?[46,125,50]:[198,40,40];
+      doc.setTextColor(...col);doc.setFont('helvetica','bold');
+      doc.text(fmt(r.amount),M+15,y+6.5,{align:'center'});y+=9;
+    });
+    doc.setDrawColor(184,134,11);doc.setLineWidth(0.5);doc.line(M,280,W-M,280);
+    doc.setFillColor(184,134,11);doc.rect(0,293,W,4,'F');
+    doc.setTextColor(160,120,30);doc.setFontSize(8);doc.setFont('helvetica','normal');
+    doc.text('Hesab Al-Safi App 2026 | '+new Date().toLocaleDateString(),W/2,287,{align:'center'});
+    doc.save('taqrir-shahri-'+now.getFullYear()+'-'+(now.getMonth()+1)+'.pdf');
+    showToast('🖨️ تم تصدير التقرير!','linear-gradient(135deg,#b71c1c,#e53935)');
+  }catch(e){console.error(e);}
+}
+function exportRecordPDF(id){
+  const r=allRecords.find(x=>x.id===id);if(!r)return;
+  try{
+    const {jsPDF}=window.jspdf;const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    const W=210,M=20;
+    doc.setFillColor(255,252,242);doc.rect(0,0,W,297,'F');
+    doc.setFillColor(r.type==='income'?46:198,r.type==='income'?125:40,r.type==='income'?50:40);doc.rect(0,0,W,30,'F');
+    doc.setTextColor(255,255,255);doc.setFontSize(16);doc.setFont('helvetica','bold');
+    doc.text(r.type==='income'?'INCOME RECORD':'EXPENSE RECORD',W/2,14,{align:'center'});
+    doc.setFontSize(10);doc.setFont('helvetica','normal');doc.text(r.date+' — '+r.time,W/2,24,{align:'center'});
+    let y=42;
+    doc.setFillColor(240,255,245);doc.setDrawColor(46,125,50);doc.setLineWidth(0.8);doc.roundedRect(M,y,W-2*M,22,4,4,'FD');
+    doc.setTextColor(46,125,50);doc.setFontSize(10);doc.text('AMOUNT',W/2,y+8,{align:'center'});
+    doc.setFontSize(20);doc.setFont('helvetica','bold');doc.text(fmt(r.amount)+' SAR',W/2,y+19,{align:'center'});
+    y+=30;
+    doc.setFillColor(252,247,230);doc.setDrawColor(200,175,100);doc.roundedRect(M,y,W-2*M,30,4,4,'FD');
+    doc.setTextColor(100,70,10);doc.setFontSize(10);doc.setFont('helvetica','normal');
+    doc.text('Type: '+(r.type==='income'?'Income':'Expense'),M+6,y+10);
+    doc.text('Category: '+r.catAr+(r.detail?' - '+r.detail:''),M+6,y+20);
+    doc.setTextColor(160,120,30);doc.setFontSize(8);doc.text('Hesab Al-Safi 2026',W/2,286,{align:'center'});
+    doc.save('record-'+r.id+'.pdf');
+    showToast('📄 تم تصدير السجل!','linear-gradient(135deg,#b71c1c,#e53935)');
+  }catch(e){console.error(e);}
+}
+
+/* ================================================================
+   PWA
+================================================================ */
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt',(e)=>{
+  e.preventDefault();deferredPrompt=e;
+  document.getElementById('installBanner').classList.add('show');
+});
+function installApp(){
+  if(deferredPrompt){deferredPrompt.prompt();deferredPrompt.userChoice.then(()=>{deferredPrompt=null;document.getElementById('installBanner').classList.remove('show');});}
+}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
+
+/* ================================================================
+   INIT
+================================================================ */
+checkSavedLogin();
+</script>
+<script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyCU-1KrVCjOww0is12TYyF_j48GljSptZw",
+    authDomain: "hesab-safi-new.firebaseapp.com",
+    databaseURL: "https://hesab-safi-new-default-rtdb.firebaseio.com",
+    projectId: "hesab-safi-new",
+    storageBucket: "hesab-safi-new.firebasestorage.app",
+    messagingSenderId: "994225844976",
+    appId: "1:994225844976:web:05ff315c079718b4c80835"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+</script>
+</body>
+</html>
