@@ -891,53 +891,209 @@ function showToast(msg,bg){
 ================================================================ */
 function printMonthlyReport(){
   try{
-    const {jsPDF}=window.jspdf;
-    const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-    const W=210,M=15;
-    const now=new Date();
-    const recs=getMonthRecords();
-    let tI=0,tE=0;
-    recs.forEach(r=>{if(r.type==='income')tI+=r.amount;else tE+=r.amount;});
-    const tN=tI-tE,d=tN>0?tN/3:0,c=tN>0?(tN*2)/3:0;
-    doc.setFillColor(255,252,242);doc.rect(0,0,W,297,'F');
-    doc.setFillColor(184,134,11);doc.rect(0,0,W,4,'F');
-    doc.setFillColor(240,192,64);doc.rect(0,4,W,1,'F');
-    doc.setTextColor(100,70,10);doc.setFontSize(20);doc.setFont('helvetica','bold');
-    doc.text('Al-Taqrir Al-Shahri',W/2,20,{align:'center'});
-    doc.setFontSize(11);doc.setFont('helvetica','normal');doc.setTextColor(140,100,20);
-    doc.text(now.toLocaleDateString('ar-SA',{year:'numeric',month:'long'}),W/2,28,{align:'center'});
-    doc.setDrawColor(200,175,100);doc.setLineWidth(0.4);doc.line(M,32,W-M,32);
-    let y=38;
-    doc.setFontSize(12);doc.setFont('helvetica','bold');doc.setTextColor(100,70,10);
-    doc.text('Ijmali Al-Amaliyat: '+recs.length,W-M,y,{align:'right'});y+=8;
-    doc.setFont('helvetica','normal');doc.setFontSize(11);doc.setTextColor(46,125,50);
-    doc.text('Ijmali Al-Mablagh: ',W-M,y,{align:'right'});doc.setFont('helvetica','bold');doc.text(fmt(tI)+'  r.s',W-M-55,y);y+=8;
-    doc.setTextColor(21,101,192);doc.setFont('helvetica','normal');
-    doc.text('Nasibak: ',W-M,y,{align:'right'});doc.setFont('helvetica','bold');doc.text(fmt(d)+'  r.s',W-M-55,y);y+=8;
-    doc.setTextColor(106,27,154);doc.setFont('helvetica','normal');
-    doc.text('Nasib Al-Sharika: ',W-M,y,{align:'right'});doc.setFont('helvetica','bold');doc.text(fmt(c)+'  r.s',W-M-55,y);y+=10;
-    doc.setDrawColor(200,175,100);doc.setLineWidth(0.4);doc.line(M,y,W-M,y);y+=6;
-    doc.setFillColor(245,235,195);doc.setDrawColor(200,175,100);doc.rect(M,y,W-2*M,10,'FD');
-    doc.setTextColor(100,70,10);doc.setFontSize(11);doc.setFont('helvetica','bold');
-    doc.text('Al-Tarikh',W-M-5,y+7,{align:'right'});doc.text('Al-Tafsil',W/2,y+7,{align:'center'});doc.text('Al-Mablagh',M+15,y+7,{align:'center'});y+=10;
-    recs.forEach((r,i)=>{
-      if(y>270){doc.addPage();doc.setFillColor(255,252,242);doc.rect(0,0,W,297,'F');y=20;}
-      const bg=i%2===0?[255,252,242]:[252,247,230];
-      doc.setFillColor(...bg);doc.setDrawColor(220,200,150);doc.rect(M,y,W-2*M,9,'FD');
-      doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(80,60,20);
-      doc.text(r.date+' '+r.time,W-M-3,y+6.5,{align:'right'});
-      const det=r.detail?r.catAr+' - '+r.detail:r.catAr;
-      doc.text(det,W/2,y+6.5,{align:'center'});
-      const col=r.type==='income'?[46,125,50]:[198,40,40];
-      doc.setTextColor(...col);doc.setFont('helvetica','bold');
-      doc.text(fmt(r.amount),M+15,y+6.5,{align:'center'});y+=9;
+    const now = new Date();
+    const recs = getMonthRecords();
+
+    let totalIncome = 0, totalExpense = 0;
+    recs.forEach(r => {
+      if(r.type === 'income') totalIncome += r.amount;
+      else totalExpense += r.amount;
     });
-    doc.setDrawColor(184,134,11);doc.setLineWidth(0.5);doc.line(M,280,W-M,280);
-    doc.setFillColor(184,134,11);doc.rect(0,293,W,4,'F');
-    doc.setTextColor(160,120,30);doc.setFontSize(8);doc.setFont('helvetica','normal');
-    doc.text('Hesab Al-Safi App 2026 | '+new Date().toLocaleDateString(),W/2,287,{align:'center'});
-    doc.save('taqrir-shahri-'+now.getFullYear()+'-'+(now.getMonth()+1)+'.pdf');
-    showToast('🖨️ تم تصدير التقرير!','linear-gradient(135deg,#b71c1c,#e53935)');
+
+    const net = totalIncome - totalExpense;
+    const myShare = net > 0 ? net / 3 : 0;
+    const companyShare = net > 0 ? (net * 2) / 3 : 0;
+
+    const rows = recs.map(r => `
+      <tr>
+        <td>${r.date} ${r.time}</td>
+        <td>${r.type === 'income' ? 'دخل' : 'مصروف'}</td>
+        <td>${r.detail ? `${r.catAr} - ${r.detail}` : r.catAr}</td>
+        <td class="${r.type === 'income' ? 'income' : 'expense'}">${fmt(r.amount)} ريال</td>
+      </tr>
+    `).join('');
+
+    const reportHtml = `
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>التقرير الشهري</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    body{
+      font-family:'Cairo',sans-serif;
+      background:#f7f3ec;
+      color:#3a2e1e;
+      margin:0;
+      padding:30px;
+    }
+    .report{
+      max-width:1000px;
+      margin:auto;
+      background:#fffdf8;
+      border:1px solid #d8c9a8;
+      box-shadow:0 4px 18px rgba(0,0,0,.08);
+      padding:28px;
+    }
+    .top-line{
+      height:10px;
+      background:linear-gradient(90deg,#b8860b,#f0c040);
+      margin:-28px -28px 24px -28px;
+    }
+    h1{
+      margin:0 0 8px;
+      text-align:center;
+      color:#8a5b00;
+      font-size:34px;
+      font-weight:900;
+    }
+    .sub{
+      text-align:center;
+      color:#8f6d2a;
+      font-size:16px;
+      margin-bottom:22px;
+    }
+    .summary{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:12px;
+      margin-bottom:24px;
+    }
+    .box{
+      background:#fff8e6;
+      border:1px solid #d8c9a8;
+      border-radius:14px;
+      padding:14px;
+      text-align:center;
+    }
+    .box .label{
+      font-size:13px;
+      color:#7a6845;
+      margin-bottom:8px;
+      font-weight:700;
+    }
+    .box .value{
+      font-size:22px;
+      font-weight:900;
+    }
+    .green{color:#2e7d32}
+    .red{color:#c62828}
+    .blue{color:#1565c0}
+    .purple{color:#6a1b9a}
+    table{
+      width:100%;
+      border-collapse:collapse;
+      margin-top:10px;
+      font-size:14px;
+    }
+    th{
+      background:#f3e7b8;
+      color:#7a5600;
+      padding:12px 10px;
+      border:1px solid #d8c9a8;
+      font-weight:800;
+    }
+    td{
+      padding:10px;
+      border:1px solid #ddd5c2;
+      text-align:center;
+    }
+    tr:nth-child(even){background:#fffaf0}
+    .income{color:#2e7d32;font-weight:800}
+    .expense{color:#c62828;font-weight:800}
+    .footer{
+      margin-top:24px;
+      text-align:center;
+      color:#8f6d2a;
+      font-size:12px;
+      border-top:2px solid #d8c9a8;
+      padding-top:12px;
+    }
+    .empty{
+      text-align:center;
+      padding:30px;
+      color:#8f6d2a;
+      font-weight:700;
+      background:#fff8e6;
+      border:1px dashed #d8c9a8;
+      border-radius:14px;
+    }
+    @media print{
+      body{background:#fff;padding:0}
+      .report{
+        box-shadow:none;
+        border:none;
+        max-width:none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="report">
+    <div class="top-line"></div>
+    <h1>التقرير الشهري</h1>
+    <div class="sub">${now.toLocaleDateString('ar-SA',{year:'numeric',month:'long'})}</div>
+
+    <div class="summary">
+      <div class="box">
+        <div class="label">إجمالي العمليات</div>
+        <div class="value">${recs.length}</div>
+      </div>
+      <div class="box">
+        <div class="label">إجمالي الدخل</div>
+        <div class="value green">${fmt(totalIncome)} ريال</div>
+      </div>
+      <div class="box">
+        <div class="label">نصيبك</div>
+        <div class="value blue">${fmt(myShare)} ريال</div>
+      </div>
+      <div class="box">
+        <div class="label">نصيب الشركة</div>
+        <div class="value purple">${fmt(companyShare)} ريال</div>
+      </div>
+    </div>
+
+    ${
+      recs.length
+      ? `<table>
+          <thead>
+            <tr>
+              <th>التاريخ</th>
+              <th>النوع</th>
+              <th>التفصيل</th>
+              <th>المبلغ</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows}
+          </tbody>
+        </table>`
+      : `<div class="empty">لا توجد سجلات في هذا الشهر</div>`
+    }
+
+    <div class="footer">
+      حساب الصافي والأنصبة — ${new Date().toLocaleDateString('ar-SA')}
+    </div>
+  </div>
+
+  <script>
+    window.onload = function(){
+      window.print();
+    }
+  <\/script>
+</body>
+</html>
+    `;
+
+    const printWindow = window.open('', '_blank');
+    printWindow.document.open();
+    printWindow.document.write(reportHtml);
+    printWindow.document.close();
+
+    showToast('🖨️ تم فتح التقرير للطباعة!','linear-gradient(135deg,#2e7d32,#43a047)');
   }catch(e){console.error(e);}
 }
 function exportRecordPDF(id){
